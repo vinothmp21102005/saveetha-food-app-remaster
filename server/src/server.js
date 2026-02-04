@@ -16,7 +16,7 @@ const startServer = async () => {
 
         const io = new Server(server, {
             cors: {
-                origin: process.env.CLIENT_URL || "http://localhost:5173",
+                origin: ["http://localhost:5173", "https://saveetha-food-app-remaster.vercel.app", process.env.CLIENT_URL].filter(Boolean),
                 methods: ["GET", "POST"],
                 credentials: true
             }
