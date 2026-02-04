@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../hooks/useSocket';
 import { getShopOrders } from '../../api/order';
 import OrderCard from './OrderCard';
+import ShopStats from './ShopStats';
 
 const ShopDashboard = () => {
     const { user } = useAuth();
@@ -61,6 +62,9 @@ const ShopDashboard = () => {
                     {orders.length} Active Orders
                 </span>
             </h2>
+
+            {/* Business Stats */}
+            <ShopStats />
 
             {loading ? <p>Loading orders...</p> : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

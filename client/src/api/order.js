@@ -19,3 +19,13 @@ export const getMyOrders = async () => {
     const { data } = await api.get('/orders/myorders');
     return data;
 };
+
+export const getAdminAnalytics = async () => {
+    const { data } = await api.get('/orders/analytics/admin');
+    return data;
+};
+
+export const getShopAnalytics = async (shopId) => {
+    const { data } = await api.get(`/orders/analytics/shop/${shopId}`);
+    return data;
+};

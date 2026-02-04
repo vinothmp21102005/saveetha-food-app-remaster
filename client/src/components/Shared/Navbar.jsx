@@ -1,19 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../hooks/useSocket';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
+    const [notification, setNotification] = useState(null);
+    const { socket } = useSocket();
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
+    // Global Order Ready Notification
+    useEffect(() => {
+        if (!socket || !user || user.role !== 'student') return;
+
+        const handleStatusUpdate = (data) => {
+            if (data.status === 'ready') {
+                setNotification(`🎉 Order #${data.orderId.slice(-4).toUpperCase()} is READY! Please collect it.`);
+                setTimeout(() => setNotification(null), 5000); // Hide after 5s
+            }
+        };
+
+        socket.on('order:status_update', handleStatusUpdate);
+
+        return () => {
+            socket.off('order:status_update', handleStatusUpdate);
+        };
+    }, [socket, user]);
+
     return (
         <nav className="bg-blue-600 p-4 text-white shadow-md relative z-50">
+            {/* Global Notification Toast */}
+            {notification && (
+                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl z-50 animate-bounce flex items-center gap-2 text-lg font-bold border-2 border-white">
+                    <span>🔔</span> {notification}
+                </div>
+            )}
+
             <div className="container mx-auto flex justify-between items-center">
                 <Link to="/" className="text-2xl font-bold">QueueLess Food Court</Link>
 

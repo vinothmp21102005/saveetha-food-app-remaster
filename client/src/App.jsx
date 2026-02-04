@@ -6,6 +6,7 @@ import ProtectedRoute from './components/Shared/ProtectedRoute';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import ManageShops from './components/Admin/ManageShops';
 import ManageMenu from './components/Admin/ManageMenu';
+import AdminAnalytics from './components/Admin/Analytics';
 import StudentHome from './components/Student/Home';
 import ShopMenu from './components/Student/ShopMenu';
 import Cart from './components/Student/Cart';
@@ -34,6 +35,7 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/shops" element={<ManageShops />} />
             <Route path="/admin/menu" element={<ManageMenu />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
           </Route>
 
           {/* Student Routes */}

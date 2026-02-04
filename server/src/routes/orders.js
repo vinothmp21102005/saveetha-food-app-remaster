@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const { protect, shopkeeper } = require('../middleware/auth');
 
@@ -110,6 +111,94 @@ router.get('/admin/active', protect, async (req, res) => {
             .populate('studentId', 'name');
 
         res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @desc    Get Admin Analytics (Total Business per Shop)
+// @route   GET /api/orders/analytics/admin
+// @access  Private/Admin
+router.get('/analytics/admin', protect, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Not authorized' });
+
+    try {
+        const analytics = await Order.aggregate([
+            { $match: { paymentStatus: 'paid' } }, // Only count paid orders
+            {
+                $group: {
+                    _id: "$shopId",
+                    totalOrders: { $sum: 1 },
+                    totalRevenue: { $sum: "$totalPrice" }
+                }
+            },
+            {
+                $lookup: {
+                    from: "shops",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "shop"
+                }
+            },
+            { $unwind: "$shop" },
+            {
+                $project: {
+                    shopName: "$shop.name",
+                    totalOrders: 1,
+                    totalRevenue: 1
+                }
+            }
+        ]);
+        res.json(analytics);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @desc    Get Shop Analytics (Personal Business)
+// @route   GET /api/orders/analytics/shop/:shopId
+// @access  Private/Shopkeeper
+router.get('/analytics/shop/:shopId', protect, shopkeeper, async (req, res) => {
+    try {
+        const shopId = new mongoose.Types.ObjectId(req.params.shopId);
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const stats = await Order.aggregate([
+            { $match: { shopId: shopId, paymentStatus: 'paid' } },
+            {
+                $facet: {
+                    totalStats: [
+                        {
+                            $group: {
+                                _id: null,
+                                totalRevenue: { $sum: "$totalPrice" },
+                                totalOrders: { $sum: 1 }
+                            }
+                        }
+                    ],
+                    todayStats: [
+                        { $match: { createdAt: { $gte: todayStart } } },
+                        {
+                            $group: {
+                                _id: null,
+                                todayRevenue: { $sum: "$totalPrice" },
+                                todayOrders: { $sum: 1 }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        const result = {
+            totalRevenue: stats[0].totalStats[0]?.totalRevenue || 0,
+            totalOrders: stats[0].totalStats[0]?.totalOrders || 0,
+            todayRevenue: stats[0].todayStats[0]?.todayRevenue || 0,
+            todayOrders: stats[0].todayStats[0]?.todayOrders || 0
+        };
+
+        res.json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
